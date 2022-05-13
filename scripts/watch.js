@@ -5,7 +5,6 @@ esbuild.build({
     outdir: 'build',
     bundle: true,
     watch: true,
-    minify: true 
 }).then(result => {
     console.log('watching...')
     console.log(result)
