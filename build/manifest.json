@@ -8,5 +8,8 @@
     "action": {
         "default_title": "Click to show an alert"
     },
-    "permissions": ["tabs", "scripting", "activeTab"]
+    "permissions": ["tabs", "scripting", "activeTab"],
+    "host_permissions": [
+        "https://www.linkedin.com/*" 
+    ]
 }

@@ -1,4 +1,10 @@
 (() => {
+  // src/config.js
+  var URL = {
+    base: "https://www.linkedin.com/search/results/people/?keywords=fullstack"
+  };
+  var config_default = URL;
+
   // node_modules/dexie/dist/modern/dexie.mjs
   var _global = typeof globalThis !== "undefined" ? globalThis : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : global;
   var keys = Object.keys;
@@ -4726,17 +4732,49 @@
   });
 
   // src/background.js
+  var tabId;
   chrome.action.onClicked.addListener((tab) => {
-    chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ["./scripts/scrapper.js"]
+    chrome.tabs.create({
+      url: config_default.base
+    }, (tab2) => {
+      tabId = tab2.id;
+      chrome.scripting.executeScript({
+        target: { tabId: tab2.id },
+        files: ["./scripts/getUrls.js"]
+      });
     });
   });
+  var guardian = 0;
+  var urls;
   chrome.runtime.onConnect.addListener((port) => {
     if (port.name === "safePort") {
       port.onMessage.addListener(async (message) => {
         await db.profiles.add(message);
         console.log("datos guardados en indexdb");
+        console.log(guardian);
+        if (guardian < urls.length) {
+          await chrome.tabs.update(tabId, { url: urls[guardian] });
+          setTimeout(() => {
+            chrome.scripting.executeScript({
+              target: { tabId },
+              files: ["./scripts/scrapper.js"]
+            });
+          }, 5e3);
+          guardian++;
+        }
+      });
+    } else if (port.name === "safePortUrls") {
+      port.onMessage.addListener(async (message) => {
+        urls = message.urlsProfiles;
+        const [url] = urls;
+        await chrome.tabs.update(tabId, { url });
+        setTimeout(() => {
+          chrome.scripting.executeScript({
+            target: { tabId },
+            files: ["./scripts/scrapper.js"]
+          });
+        }, 5e3);
+        guardian++;
       });
     }
   });

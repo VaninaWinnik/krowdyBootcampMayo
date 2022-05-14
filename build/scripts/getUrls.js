@@ -16,16 +16,7 @@
 
   // src/functions/selector.js
   var $ = (selector, node = document) => node.querySelector(selector);
-  var $x = (xpath, node = document) => {
-    const collection = document.evaluate(xpath, node, null, XPathResult.ANY_TYPE, null);
-    let result = collection.iterateNext();
-    const elements = [];
-    while (result) {
-      elements.push(result);
-      result = collection.iterateNext();
-    }
-    return elements;
-  };
+  var $$ = (selector, node = document) => [...node.querySelectorAll(selector)];
 
   // src/functions/waitForElement.js
   var waitForElement = (selector) => new Promise((resolve, reject) => {
@@ -58,16 +49,12 @@
   };
   var selectors_default = SELECTORS;
 
-  // src/scripts/scrapper.js
+  // src/scripts/getUrls.js
   waitForElement_default("h1").then(() => {
     autoscrolling_default(30).then(() => {
-      const fullName = $(selectors_default.profile.css.fullname).textContent;
-      const experienceItems = $x(selectors_default.profile.xpath.experiencieItems);
-      const educationItems = $x(selectors_default.profile.xpath.educationItems);
-      const pruebaExperience = experienceItems.map((element) => $('span[aria-hidden="true"]', element)?.textContent);
-      const pruebaEducation = educationItems.map((element) => $('span[aria-hidden="true"]', element)?.textContent);
-      let port = chrome.runtime.connect({ name: "safePort" });
-      port.postMessage({ fullName, pruebaExperience, pruebaEducation });
+      const urlsProfiles = $$(selectors_default.search.urlsProfiles).map((element) => element.href.split("?")[0]);
+      let port = chrome.runtime.connect({ name: "safePortUrls" });
+      port.postMessage({ urlsProfiles });
     });
   }).catch(() => {
     console.log("intentelo mas tarde");
